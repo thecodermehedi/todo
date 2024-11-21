@@ -2,10 +2,10 @@
  "scripts": {
   "install:frontend": "cd frontend && bun install",
   "install:backend": "cd backend && bun install",
-  "install": "concurrently \"bun install:frontend\" \"bun install:backend\"",
+  "install": "concurrently \"bun install:backend\" \"bun install:frontend\"",
   "start:frontend": "cd frontend && bun run dev",
   "start:backend": "cd backend && bun run dev",
-  "start": "concurrently \"bun start:frontend\" \"bun start:backend\""
+  "start": "concurrently \"bun start:backend\" \"bun start:frontend\""
  },
  "dependencies": {
   "concurrently": "^9.1.0"
