@@ -4,7 +4,7 @@
  "type": "module",
  "scripts": {
   "start": "bun run index.ts",
-  "dev": "bun --watch run index.ts",
+  "dev": "bun --port 3000 --watch run index.ts",
   "build": "bun build index.ts --outdir ./build",
   "clean": "rm -rf build",
   "typecheck": "tsc --noEmit"
