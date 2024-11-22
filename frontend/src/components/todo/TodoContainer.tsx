@@ -1,31 +1,32 @@
-import AddTodo from "./AddTodo";
-import FilterTodo from "./FilterTodo";
-import TodoCard from "./TodoCard";
-import NoTodo from "./NoTodo";
-import TodoLoading from "./TodoLoading";
+import PriorityDropdown from "./PriorityDropdown";
+import Task from "./Task";
+import NoTasksDisplay from "./NoTaskDisplay";
+import TodoSkeleton from "./TodoSkeleton";
 import { useGetTodosQuery } from "@/redux/api/api";
 import { TTodo } from "@/types/todo";
+import { useState } from "react";
+import CreateTask from "../shared/createTask";
+import NoTaskErrorDisplay from "./NoTaskErrorDisplay";
 
 const TodoContainer = () => {
- const { data: TodoResponse, isLoading, isError } = useGetTodosQuery(undefined);
+ const [priority, setPriority] = useState<string>("");
+ const { data: TodoResponse, isLoading, isError } = useGetTodosQuery(priority);
  const todos = TodoResponse?.data;
 
  return (
   <div className="p-5">
    <div className="flex justify-between items-center">
-    <AddTodo />
-    <FilterTodo />
+    <CreateTask />
+    <PriorityDropdown priority={priority} setPriority={setPriority} />
    </div>
    <div className="mt-4 rounded-xl bg-primary-gradient w-full h-full p-[5px] overflow-x-hidden overflow-y-auto space-y-3">
-    {isLoading ? (
-     <TodoLoading />
-    ) : isError ? (
-      <div className="text-red-500">Error fetching todos</div>
-    ) : todos && todos.length > 0 ? (
-     todos.map((todo: TTodo) => <TodoCard key={todo.id} todo={todo} />)
-    ) : (
-     <NoTodo />
-    )}
+    {isLoading ? Array(7).fill(0).map((_, index) => <TodoSkeleton key={index} />) :
+     isError ? <NoTaskErrorDisplay /> :
+      todos && todos.length > 0 ? (
+       todos.map((todo: TTodo, idx: number) => <Task key={idx} todo={todo} />)
+      ) : (
+       <NoTasksDisplay />
+      )}
    </div>
   </div>
  );
