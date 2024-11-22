@@ -1,5 +1,5 @@
 export type TTodo = {
- id: string,
+ _id?: string,
  title: string,
  priority: string,
  description: string,
