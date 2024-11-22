@@ -56,7 +56,7 @@ Please ensure your code follows our coding standards and includes tests where ap
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for more details.
 
 ## Contact
 
