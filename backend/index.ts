@@ -1,6 +1,6 @@
-import express from 'express';
-import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors';
+import express, { type Application } from 'express';
+import { MongoClient, ObjectId } from 'mongodb';
 import { checkAndSeedDatabase } from './seed';
 
 // Types
@@ -12,12 +12,12 @@ type AppConfig = {
 
 const config: AppConfig = {
  port: parseInt(process.env.PORT as string) || 3000,
- mongoUri: process.env.DB_URI as string,
- dbName: process.env.DB_NAME as string
+ mongoUri: process.env.DB_URI || "mongodb://localhost:27017",
+ dbName: process.env.DB_NAME || "todoDB"
 };
 
 // Initialize express app
-const app = express();
+const app: Application = express();
 
 // Middleware
 app.use(express.json());
@@ -90,53 +90,85 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 
   app.get('/tasks', async (req, res) => {
-   let query: { priority?: string } = {};
-   if (req.query.priority) {
-    query.priority = req.query.priority as string;
+   try {
+    let query: { priority?: string } = {};
+    if (req.query.priority) {
+     query.priority = req.query.priority as string;
+    }
+    const tasks = await taskCollection.find(query).toArray();
+    if (tasks.length > 0) {
+     res.status(200).json({ status: 'success', data: tasks, message: 'Tasks retrieved successfully' });
+    } else {
+     res.status(200).json({ status: 'success', message: 'No tasks found' });
+    }
+   } catch (error) {
+    res.status(500).json({ status: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
    }
-   const cursor = taskCollection.find(query);
-   const tasks = await cursor.toArray();
-   res.send({ status: true, data: tasks });
-  });
-
-  app.post('/task', async (req, res) => {
-   const task = req.body;
-   const result = await taskCollection.insertOne(task);
-   res.send(result);
   });
 
   app.get('/task/:id', async (req, res) => {
+   try {
+    const id = req.params.id;
+    const result = await taskCollection.findOne({ _id: new ObjectId(id) });
+    if (result) {
+     res.status(200).json({ status: 'success', data: result, message: 'Task retrieved successfully' });
+    } else {
+     res.status(404).json({ status: 'error', message: 'Task not found' });
+    }
+   } catch (error) {
+    res.status(500).json({ status: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
+   }
+  });
+
+  app.post('/tasks', async (req, res) => {
+   try {
+    const task = req.body;
+    const result = await taskCollection.insertOne(task);
+    res.status(201).json({ status: 'success', data: result, message: 'Task created successfully' });
+   } catch (error) {
+    res.status(500).json({ status: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
+   }
+  });
+
+  app.put('/task/:id', async (req, res) => {
    const id = req.params.id;
-   const result = await taskCollection.findOne({ _id: new ObjectId(id) });
-   // console.log(result);
-   res.send(result);
+   try {
+    const task = req.body;
+    const filter = { _id: new ObjectId(id) };
+    const updateDoc: { $set: any } = { $set: {} };
+
+    if (task.title !== undefined) updateDoc.$set.title = task.title;
+    if (task.description !== undefined) updateDoc.$set.description = task.description;
+    if (task.priority !== undefined) updateDoc.$set.priority = task.priority;
+    if (task.isCompleted !== undefined) updateDoc.$set.isCompleted = task.isCompleted;
+
+    const options = { upsert: false };
+    const result = await taskCollection.updateOne(filter, updateDoc, options);
+    if (result.matchedCount > 0) {
+     res.json({ status: 'success', message: 'Task updated successfully' });
+    } else {
+     res.json({ status: 'success', message: 'Task not found' });
+    }
+   } catch (error) {
+    res.status(500).json({ status: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
+   }
   });
 
   app.delete('/task/:id', async (req, res) => {
-   const id = req.params.id;
-   const result = await taskCollection.deleteOne({ _id: new ObjectId(id) });
-   // console.log(result);
-   res.send(result);
+   try {
+    const id = req.params.id;
+    const result = await taskCollection.deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount > 0) {
+     res.status(200).json({ status: 'success', message: 'Task deleted successfully' });
+    } else {
+     res.status(404).json({ status: 'error', message: 'Task not found' });
+    }
+   } catch (error) {
+    res.status(500).json({ status: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
+   }
   });
 
-  // status update
-  app.put('/task/:id', async (req, res) => {
-   const id = req.params.id;
-   console.log(id);
-   const task = req.body;
-   const filter = { _id: new ObjectId(id) };
-   const updateDoc = {
-    $set: {
-     isCompleted: task.isCompleted,
-     title: task.title,
-     description: task.description,
-     priority: task.priority,
-    },
-   };
-   const options = { upsert: true };
-   const result = await taskCollection.updateOne(filter, updateDoc, options);
-   res.json(result);
-  });
+
 
 
   // Log server details
