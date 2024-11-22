@@ -1,6 +1,6 @@
 import * as React from "react"
 import { toast } from "sonner"
-import { cn, generateId } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,9 +42,9 @@ const AddTodo = () => {
    </DrawerTrigger>
    <DrawerContent>
     <DrawerHeader className="text-left">
-     <DrawerTitle>Edit profile</DrawerTitle>
+     <DrawerTitle>Add Task</DrawerTitle>
      <DrawerDescription>
-      Make changes to your profile here. Click save when you're done.
+      Add your task here. Click save when you're done.
      </DrawerDescription>
     </DrawerHeader>
     <TodoForm className="px-4" onClose={handleClose} />
@@ -64,13 +64,13 @@ type TodoFormProps = {
 }
 
 const TodoForm = ({ className, onClose }: TodoFormProps) => {
- const [addTodo, { data, isLoading, isSuccess, isError }] = useAddTodoMutation()
+ const [addTodo] = useAddTodoMutation()
 
  const [title, setTitle] = React.useState("")
  const [priority, setPriority] = React.useState("")
  const [description, setDescription] = React.useState("")
 
- const handleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault()
 
   if (!title) return toast.error("Task is required");
@@ -78,18 +78,20 @@ const TodoForm = ({ className, onClose }: TodoFormProps) => {
   if (priority !== "low" && priority !== "medium" && priority !== "high") return toast.error("Invalid priority");
   if (!description) return toast.error("Description is required");
 
-  const NewTask = { id: generateId(), title, priority, description };
+  const NewTask = { title, priority, description };
 
-  await addTodo(NewTask)
-
-  onClose()
-  
-  toast.success("Task added successfully");
+  const response = await addTodo(NewTask)
+  if ('data' in response) {
+   onClose();
+   toast.success("Task added successfully");
+  } else {
+   toast.error("Failed to add task");
+  }
  }
  return (
   <form className={cn("grid items-start gap-4", className)} onSubmit={handleSubmit}>
    <div className="grid gap-2">
-    <Input type="text" id="title" onBlur={(e) => setTitle(e.target.value)} className="focus-visible:ring-0 bg-gray-100 focus-visible:bg-white" placeholder="Title" required />
+    <Input type="text" id="title" onChange={(e) => setTitle(e.target.value)} className="focus-visible:ring-0 bg-gray-100 focus-visible:bg-white" placeholder="Title" required />
    </div>
    <div className="grid gap-2">
     <Select onValueChange={(value) => setPriority(value)}>
@@ -104,7 +106,7 @@ const TodoForm = ({ className, onClose }: TodoFormProps) => {
     </Select>
    </div>
    <div className="grid gap-2">
-    <textarea id="description" onBlur={(e) => setDescription(e.target.value)} className="focus-visible:ring-0 bg-gray-100 focus-visible:bg-white resize-none focus:outline-none rounded-lg border p-2 text-sm" rows={7} placeholder="Description" required />
+    <textarea id="description" onChange={(e) => setDescription(e.target.value)} className="focus-visible:ring-0 bg-gray-100 focus-visible:bg-white resize-none focus:outline-none rounded-lg border p-2 text-sm" rows={7} placeholder="Description" required />
    </div>
    <Button type="submit">Save changes</Button>
   </form>
